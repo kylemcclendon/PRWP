@@ -1,0 +1,73 @@
+name: PRWP
+main: net.kylemc.prwp.PRWP
+version: 1.12.1
+
+softdepend: [WorldEdit]
+
+commands:
+   permissions:
+      description: Includes help and reload
+      aliases: p
+      usage: /permissions <help,ranks,reload>
+   promote:
+      description: Promotes a player to the next rank.
+      usage: /promote <player>
+   demote:
+      description: Demotes the player
+      usage: /demote <player>
+   setrank:
+      description: Sets the rank of a player
+      usage: /setrank <player> <rank>
+   getid:
+      description: Displays the UUID of a player
+      usage: /getid <player>
+      
+permissions:
+  permissions.moderator.promote:
+    description: Allows player to promote other players
+    default: op
+  permissions.moderator.demote:
+    description: Allows player to demote other plapyers
+    default: op
+  permissions.moderator.setrank:
+    description: Allows player to set the rank of other players
+    default: op
+  permissions.moderator.reloadothers:
+    description: Allows player to reload other player's permissions
+    default: op
+  permissions.moderator.getid:
+    description: Gets the UUID of a player
+    default: op
+  permissions.override:
+    description: Overrides any restrictive permissions
+    default: false
+  permissions.ranks:
+    description: Displays ranks
+    default: true
+  permissions.restrict.noattack:
+    description: Prevents the player from attacking anything
+    default: false
+  permissions.restrict.nobuild:
+    description: Prevents the player from building
+    default: false
+  permissions.restrict.nodamage:
+    description: Prevents player from taking damage
+    default: false
+  permissions.restrict.nodrop:
+    description: Prevents the player from dropping items
+    default: false
+  permissions.restrict.nofollow:
+    description: Prevents the player from being targeted by mobs
+    default: false
+  permissions.restrict.nohunger:
+    description: Prevents the player from losing hunger
+    default: false
+  permissions.restrict.nointeract:
+    description: Prevents the player from interacting with blocks
+    default: false
+  permissions.restrict.nopickup:
+    description: Prevents the player from picking up items
+    default: false
+  permissions.restrict.noremove:
+    description: Prevents the player from removing from chests
+    default: false
