@@ -1,6 +1,6 @@
 name: PRWP
 main: net.kylemc.prwp.PRWP
-version: 1.12.1
+version: 1.5.2
 
 softdepend: [WorldEdit]
 
@@ -15,9 +15,6 @@ commands:
    demote:
       description: Demotes the player
       usage: /demote <player>
-   setrank:
-      description: Sets the rank of a player
-      usage: /setrank <player> <rank>
    getid:
       description: Displays the UUID of a player
       usage: /getid <player>

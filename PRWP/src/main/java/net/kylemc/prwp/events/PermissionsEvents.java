@@ -1,5 +1,7 @@
 package net.kylemc.prwp.events;
 
+import java.util.UUID;
+
 import net.kylemc.prwp.utils.Utils;
 
 import org.bukkit.ChatColor;
@@ -32,11 +34,13 @@ public final class PermissionsEvents implements Listener
 		if (event.isCancelled()) {
 			return;
 		}
-		java.util.UUID pu = event.getPlayer().getUniqueId();
+		UUID pu = event.getPlayer().getUniqueId();
 		String prefix = Utils.prefixes.get(pu);
-		String alteredPrefix = ChatColor.translateAlternateColorCodes('&', prefix);
-		String eventFormat = "<" + alteredPrefix + "%s" + "> " + "%s";
-		event.setFormat(eventFormat);
+		if(!prefix.contains("_")){
+			String alteredPrefix = ChatColor.translateAlternateColorCodes('&', prefix);
+			String eventFormat = "<" + alteredPrefix + "%s" + "> " + "%s";
+			event.setFormat(eventFormat);
+		}
 	}
 
 	@EventHandler
@@ -74,23 +78,25 @@ public final class PermissionsEvents implements Listener
 	@EventHandler
 	private void blockInteraction(PlayerInteractEvent event)
 	{
-		if (event.getClickedBlock() == null) { return;
+		if (event.getClickedBlock() == null) {
+			return;
 		}
+
 		Player p = event.getPlayer();
 
 		String perm = "interact." + event.getClickedBlock().getTypeId();
 
-		if ((!p.hasPermission("permissions.restrict.nointeract")) || (p.hasPermission("permissions.override"))) { return;
+		if ((!p.hasPermission("permissions.restrict.nointeract")) || (p.hasPermission("permissions.override"))) {
+			return;
 		}
 
-		if (p.hasPermission(perm)) { return;
+		if (p.hasPermission(perm)) {
+			return;
 		}
 
-
-		if (event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) { return;
+		if (event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) {
+			return;
 		}
-
-
 
 		if (Utils.contains(Integer.toString(event.getClickedBlock().getTypeId()), Utils.bbl))
 		{

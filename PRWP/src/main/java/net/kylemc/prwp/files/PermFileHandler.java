@@ -3,35 +3,57 @@ package net.kylemc.prwp.files;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import net.kylemc.prwp.utils.Utils;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 
-
 public final class PermFileHandler
 {
-	static File dFolder;
-	private File settingsFile;
-	private YamlConfiguration settings;
-	private static YamlConfiguration namesSettings;
-	public static File namesFile;
+	private static File dFolder;
+	private static File configFile; //PRWP Settings
+	public File namesFile; //UUID: Name
+	public static File ranksFile; //Rank Name: Prefix
+	public File playerRanksFile; //UUID: Rank
+	public static YamlConfiguration configSettings;
+	public static YamlConfiguration namesSettings;
+	public static YamlConfiguration ranksSettings;
+	public static YamlConfiguration playerRanksSettings;
 
 	public PermFileHandler(File main)
 	{
 		dFolder = main;
+		initConfigFile();
+		initNamesFile();
+		initPlayerRanksFile();
+		addRanksToFile();
+		createBaseFolders();
+		createSubFolders();
 	}
 
-	public final void initFiles()
-	{
-		settingsFile = new File(dFolder, "config.yml");
-		namesFile = new File(dFolder, "names.yml");
+	private final void initConfigFile(){
+		configFile = new File(dFolder, "config.yml");
+		if (!configFile.exists()) {
+			configSettings = new YamlConfiguration();
+			configSettings.set("groups", "#EXAMPLE: guest,member,veteran");
+			configSettings.set("mods", "#EXAMPLE: op,admin");
+			configSettings.set("block-blacklist", "#EXAMPLE: 1,2,3,4");
+			configSettings.set("block-whitelist", "#EXAMPLE: 1,2,3,4");
+			saveSettings();
+		}
 
+		configSettings = YamlConfiguration.loadConfiguration(configFile);
+		saveSettings();
+		checkSettings();
+	}
+
+	private final void initNamesFile(){
+		namesFile = new File(dFolder, "names.yml");
 		if (!namesFile.exists()) {
 			namesSettings = new YamlConfiguration();
 			namesSettings.set("#", "Example");
@@ -41,31 +63,27 @@ public final class PermFileHandler
 				e.printStackTrace();
 			}
 		}
-
-
-		if (!settingsFile.exists()) {
-			settings = new YamlConfiguration();
-			settings.set("groups", "#EXAMPLE: guest,member,veteran");
-			settings.set("mods", "#EXAMPLE: op,admin");
-			settings.set("block-blacklist", "#EXAMPLE: 1,2,3,4");
-			settings.set("block-whitelist", "#EXAMPLE: 1,2,3,4");
-			saveSettings();
-		}
-
-		settings = YamlConfiguration.loadConfiguration(settingsFile);
-		saveSettings();
-
-
-		checkSettings();
 	}
 
-	private final boolean saveSettings()
-	{
-		if (!settingsFile.exists()) {
-			settingsFile.getParentFile().mkdirs();
+	private final void initPlayerRanksFile(){
+		playerRanksFile = new File(dFolder, "playerRanks.yml");
+		if(!playerRanksFile.exists()){
+			playerRanksSettings = new YamlConfiguration();
+			try {
+				playerRanksSettings.save(playerRanksFile);
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private final boolean saveSettings(){
+		if (!configFile.exists()) {
+			configFile.getParentFile().mkdirs();
 		}
 		try {
-			settings.save(settingsFile);
+			configSettings.save(configFile);
 			return true;
 		}
 		catch (IOException e) {
@@ -76,125 +94,142 @@ public final class PermFileHandler
 
 	private final void checkSettings()
 	{
-		if ((settings.getString("groups") == null) || (settings.getString("groups").contains("#"))) {
+		if ((configSettings.getString("groups") == null) || (configSettings.getString("groups").contains("#"))) {
 			Utils.groupNames = new String[] { "" };
 		}
 		else {
-			Utils.groupNames = settings.getString("groups").split("\\s*,\\s*");
+			Utils.groupNames = configSettings.getString("groups").split("\\s*,\\s*");
 		}
 
-		if ((settings.getString("mods") == null) || (settings.getString("mods").contains("#"))) {
+		if ((configSettings.getString("mods") == null) || (configSettings.getString("mods").contains("#"))) {
 			Utils.modNames = new String[] { "" };
 		}
 		else {
-			Utils.modNames = settings.getString("mods").split("\\s*,\\s*");
+			Utils.modNames = configSettings.getString("mods").split("\\s*,\\s*");
 		}
 
-		if ((settings.getString("block-blacklist") == null) || (settings.getString("block-blacklist").contains("#"))) {
+		if ((configSettings.getString("block-blacklist") == null) || (configSettings.getString("block-blacklist").contains("#"))) {
 			Utils.bbl = new String[] { "" };
 		}
 		else {
-			Utils.bbl = settings.getString("block-blacklist").split("\\s*,\\s*");
+			Utils.bbl = configSettings.getString("block-blacklist").split("\\s*,\\s*");
 			Arrays.sort(Utils.bbl);
 		}
 
-		if ((settings.getString("block-whitelist") == null) || (settings.getString("block-whitelist").contains("#"))) {
+		if ((configSettings.getString("block-whitelist") == null) || (configSettings.getString("block-whitelist").contains("#"))) {
 			Utils.bwl = new String[] { "" };
 		}
 		else {
-			Utils.bwl = settings.getString("block-whitelist").split("\\s*,\\s*");
+			Utils.bwl = configSettings.getString("block-whitelist").split("\\s*,\\s*");
 			Arrays.sort(Utils.bwl);
 		}
 	}
 
-	public final void createBaseFolders()
+	private final void addRanksToFile(){
+		ranksFile = new File(dFolder, "ranks.yml");
+		if (!ranksFile.exists()){
+			try {
+				ranksFile.createNewFile();
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+			ranksSettings = new YamlConfiguration();
+		}
+
+		ranksSettings = YamlConfiguration.loadConfiguration(ranksFile);
+
+		Set<String> existingRanks = ranksSettings.getKeys(true);
+		String[] fileGroupRanks = configSettings.getString("groups").split("\\s*,\\s*");
+		String[] fileModRanks = configSettings.getString("mods").split("\\s*,\\s*");
+
+		for(String rank: fileGroupRanks){
+			if(!existingRanks.contains(rank)){
+				ranksSettings.set(rank, "[&4_&F]");
+			}
+		}
+
+		for(String rank: fileModRanks){
+			if(!existingRanks.contains(rank)){
+				ranksSettings.set(rank, "[&4_&F]");
+			}
+		}
+
+		try {
+			ranksSettings.save(ranksFile);
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private final void createBaseFolders()
 	{
 		File worldsFolder = new File(dFolder, "Worlds");
-		File groupsFolder = new File(dFolder, "Groups");
-		File playersFolder = new File(dFolder, "Players");
-
 		if (!worldsFolder.exists()) {
 			worldsFolder.mkdir();
 		}
 
+		File groupsFolder = new File(dFolder, "Groups");
 		if (!groupsFolder.exists()) {
 			groupsFolder.mkdir();
 		}
 
+		File playersFolder = new File(dFolder, "Players");
 		if (!playersFolder.exists()) {
 			playersFolder.mkdir();
 		}
 	}
 
-	public final boolean createSubFolders()
+	public final void createSubFolders()
 	{
-		if ((createWorldFolders(Utils.worldNames)) && (createGroupFiles())) {
-			return true;
-		}
-		return false;
+		createWorldFolders(Utils.worldNames);
+		writeGroups(new File(dFolder, "Groups"));
 	}
 
-	private final boolean createWorldFolders(List<String> worldnames)
+	private final void createWorldFolders(List<String> worldnames)
 	{
 		File worldsFolder = new File(dFolder, "Worlds");
 
 		for (String world : worldnames) {
 			File newWorld = new File(worldsFolder, world);
-			if (!newWorld.exists()) {
+			if (!newWorld.exists()){
 				newWorld.mkdir();
-				if (newWorld.exists())
-				{
-					writeGroups(newWorld);
-				}
 			}
-			else
-			{
+			if (newWorld.exists()){
 				writeGroups(newWorld);
 			}
 		}
-		return true;
 	}
 
-	private final boolean createGroupFiles()
+	private final void writeGroups(File file)
 	{
-		File groupsFolder = new File(dFolder, "Groups");
-		File newGroup = new File(groupsFolder, "_all.txt");
-		if (!newGroup.exists()) {
-			try {
-				newGroup.createNewFile();
-			} catch (IOException e) {
-				e.printStackTrace(); }
-			writeDefaultGroup(newGroup);
+		File allGroup = new File(file, "_all.txt");
+		if (!allGroup.exists()) {
+			writeDefaultGroup(allGroup);
 		}
 
-		for (int i = 0; i < Utils.groupNames.length; i++) {
-			newGroup = new File(groupsFolder, Utils.groupNames[i] + ".txt");
-			if (Utils.groupNames[i].equals("")) {
+		String[] groups = Utils.groupNames;
+		for(String group : groups){
+			if(group.equals("")){
 				break;
 			}
+			File groupFile = new File(file, group + ".txt");
+			if(!groupFile.exists()){
+				writeDefaultGroup(groupFile);
+			}
+		}
 
-			if (!newGroup.exists()) {
-				try {
-					newGroup.createNewFile();
-				} catch (IOException e) {
-					e.printStackTrace(); }
-				writeDefaultGroup(newGroup);
-			}
-		}
-		for (int i = 0; i < Utils.modNames.length; i++) {
-			newGroup = new File(groupsFolder, Utils.modNames[i] + ".txt");
-			if (Utils.modNames[i].equals("")) {
+		String[] mods = Utils.modNames;
+		for(String mod : mods){
+			if(mod.equals("")){
 				break;
 			}
-			if (!newGroup.exists()) {
-				try {
-					newGroup.createNewFile();
-				} catch (IOException e) {
-					e.printStackTrace(); }
-				writeDefaultGroup(newGroup);
+			File modFile = new File(file, mod + ".txt");
+			if(!modFile.exists()){
+				writeDefaultGroup(modFile);
 			}
 		}
-		return true;
 	}
 
 	private final void writeDefaultGroup(File file)
@@ -202,10 +237,6 @@ public final class PermFileHandler
 		BufferedWriter writer = null;
 		try {
 			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "utf-8"));
-
-			writer.write("Prefix: #[&4G&f]");
-			writer.newLine();
-			writer.newLine();
 			writer.write("Permissions:");
 			writer.newLine();
 			writer.write("--------------");
@@ -213,66 +244,6 @@ public final class PermFileHandler
 		}
 		catch (IOException e) {
 			e.printStackTrace();
-		}
-	}
-
-
-	private final void writeGroups(File file)
-	{
-		try
-		{
-			File group = new File(file, "_all.txt");
-			if (!group.exists()) {
-				BufferedWriter output = new BufferedWriter(new FileWriter(group));
-				output.write("#Add all permissions after the 'Permissions:' line. Do not Modify any other lines");
-				output.newLine();
-				output.newLine();
-				output.write("Permissions:");
-				output.newLine();
-				output.write("--------------");
-				output.close();
-			}
-		} catch (IOException e) {
-			e.printStackTrace(); }
-		String[] arrayOfString;
-		int j = (arrayOfString = Utils.groupNames).length; for (int i = 0; i < j; i++) { String newGroup = arrayOfString[i];
-		if (newGroup.equals("")) {
-			break;
-		}
-		try {
-			File group = new File(file, newGroup + ".txt");
-			if (!group.exists()) {
-				BufferedWriter output = new BufferedWriter(new FileWriter(group));
-				output.write("#Add all permissions after the 'Permissions:' line. Do not Modify any other lines");
-				output.newLine();
-				output.newLine();
-				output.write("Permissions:");
-				output.newLine();
-				output.write("--------------");
-				output.close();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} }
-		j = (arrayOfString = Utils.modNames).length; for (int i = 0; i < j; i++) { String modGroup = arrayOfString[i];
-		if (modGroup.equals("")) {
-			break;
-		}
-		try {
-			File group = new File(file, modGroup + ".txt");
-			if (!group.exists()) {
-				BufferedWriter output = new BufferedWriter(new FileWriter(group));
-				output.write("#Add all permissions after the 'Permissions:' line. Do not Modify any other lines");
-				output.newLine();
-				output.newLine();
-				output.write("Permissions:");
-				output.newLine();
-				output.write("--------------");
-				output.close();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 		}
 	}
 }

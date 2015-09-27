@@ -1,10 +1,5 @@
 package net.kylemc.prwp.events;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -13,12 +8,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import net.kylemc.prwp.PRWP;
-import net.kylemc.prwp.commands.Commands;
-import net.kylemc.prwp.files.PermFileHandler;
 import net.kylemc.prwp.utils.PermThread;
 import net.kylemc.prwp.utils.Utils;
 
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -33,95 +25,48 @@ public class ReloadEvents implements Listener
 	private final PRWP plugin;
 	ExecutorService service = Executors.newFixedThreadPool(30);
 
-	public ReloadEvents(PRWP instance)
-	{
+	public ReloadEvents(PRWP instance){
 		plugin = instance;
 	}
 
 	@EventHandler
-	private void onPlayerJoin(PlayerJoinEvent event)
-	{
+	private void onPlayerJoin(PlayerJoinEvent event){
 		Player p = event.getPlayer();
 		UUID pu = p.getUniqueId();
 		String world = p.getWorld().getName();
 		Utils.uuids.put(p.getName(), pu);
 
-		if (p.isOp()) {
-			p.setAllowFlight(true);
+		String name = Utils.getNames().getString(pu.toString());
+
+		//First Join
+		if(name == null){
+			Utils.setNameValue(pu, p.getName());
+			Utils.setPlayerRankValue(pu, "");
+			name = p.getName();
 		}
 
-		p.setWalkSpeed(setSpeed(world));
-
-		YamlConfiguration YC = YamlConfiguration.loadConfiguration(PermFileHandler.namesFile);
-		String name = YC.getString(pu.toString());
-
-		if ((name == null) || (!name.equals(p.getName()))) {
-			YC.set(pu.toString(), p.getName());
-			try {
-				YC.save(PermFileHandler.namesFile);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			try
-			{
-				File playerFile = new File(Commands.playersFolder, pu + ".txt");
-				String text = "";
-
-				if (playerFile.exists()) {
-					BufferedReader reader = new BufferedReader(new FileReader(playerFile));
-					String line = "";
-
-					text = text + reader.readLine() + Utils.newLine();
-					text = text + "Name: " + p.getName() + Utils.newLine();
-					reader.readLine();
-					text = text + reader.readLine() + Utils.newLine();
-					text = text + reader.readLine() + Utils.newLine();
-					text = text + reader.readLine() + Utils.newLine();
-
-					while ((line = reader.readLine()) != null)
-					{
-						text = text + line + Utils.newLine();
-					}
-					reader.close();
-				}
-				else {
-					text = text + "Rank: " + Utils.groupNames[0] + Utils.newLine();
-					text = text + "Name: " + p.getName() + Utils.newLine();
-					text = text + Utils.newLine();
-					text = text + "Permissions:" + Utils.newLine();
-					text = text + "------------" + Utils.newLine();
-				}
-
-				FileWriter writer = new FileWriter(playerFile);
-				writer.write(text);
-				writer.close();
-			}
-			catch (IOException ioe) {
-				ioe.printStackTrace();
-			}
+		//Name Change
+		if (!name.equals(p.getName())) {
+			Utils.setNameValue(pu, p.getName());
 		}
 
 		setPermissions(p, pu, world);
 	}
 
 	@EventHandler
-	private void onPlayerQuit(PlayerQuitEvent event)
-	{
+	private void onPlayerQuit(PlayerQuitEvent event){
 		removePlayer(event.getPlayer());
 	}
 
 	@EventHandler
-	private void onPlayerKick(PlayerKickEvent event)
-	{
+	private void onPlayerKick(PlayerKickEvent event){
 		removePlayer(event.getPlayer());
 	}
 
 	@EventHandler
-	private void onSwitchWorlds(PlayerChangedWorldEvent event)
-	{
+	private void onSwitchWorlds(PlayerChangedWorldEvent event){
 		Player p = event.getPlayer();
 		UUID pu = p.getUniqueId();
-
 
 		PermissionAttachment attachment1 = Utils.players.get(pu);
 		p.removeAttachment(attachment1);
@@ -130,14 +75,10 @@ public class ReloadEvents implements Listener
 
 		String world = p.getWorld().getName();
 
-		p.setWalkSpeed(setSpeed(world));
-
-
 		setPermissions(p, pu, world);
 	}
 
-	private final void removePlayer(Player p)
-	{
+	private final void removePlayer(Player p){
 		UUID pu = Utils.uuids.get(p.getName());
 		PermissionAttachment attachment = Utils.players.get(pu);
 
@@ -149,14 +90,6 @@ public class ReloadEvents implements Listener
 		if (attachment != null) {
 			p.removeAttachment(attachment);
 		}
-	}
-
-	private final float setSpeed(String worldName)
-	{
-		if (worldName.equals("Hyrule")) {
-			return 0.3F;
-		}
-		return 0.2F;
 	}
 
 	private void setPermissions(Player p, UUID pu, String world) {

@@ -9,11 +9,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.UUID;
-
-import net.kylemc.prwp.commands.Commands;
 
 import org.bukkit.Bukkit;
 import org.bukkit.permissions.Permission;
@@ -22,7 +19,7 @@ public final class GetPermissions
 {
 	private static HashMap<String, Set<String>> Wildcards = new HashMap<String, Set<String>>();
 	private static Set<Permission> serverPermissions = Bukkit.getPluginManager().getPermissions();
-	private static File dfolder = net.kylemc.prwp.PRWP.dFolder;
+	private static File dfolder = Utils.getdFolder();
 	private static File playersFolder = new File(dfolder, "Players");
 	private static File groupsFolder = new File(dfolder, "Groups");
 	private static File worldsFolder = new File(dfolder, "Worlds");
@@ -40,9 +37,11 @@ public final class GetPermissions
 			if (!playerFile.exists()) {
 				try {
 					File p = new File(playersFolder, pu + ".txt");
-					BufferedWriter out = new BufferedWriter(new FileWriter(p));
-					out.write("Rank: " + Utils.groupNames[0] + Utils.newLine() + "Name: " + Bukkit.getPlayer(pu).getName() + Utils.newLine() + Utils.newLine() + "Permissions:");
-					out.close();
+					BufferedWriter writer = new BufferedWriter(new FileWriter(p));
+					writer.write("Permissions:");
+					writer.newLine();
+					writer.write("--------------");
+					writer.close();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -52,8 +51,7 @@ public final class GetPermissions
 			e.printStackTrace();
 		}
 
-
-		String rank = Commands.getRank(pu);
+		String rank = Utils.getPlayerRanks().getString(pu.toString());
 
 		if(Utils.contains(rank, Utils.groupNames)) {
 			File globalFile = new File(groupsFolder, "_all.txt");
@@ -67,35 +65,32 @@ public final class GetPermissions
 		if (((rank.equals("")) || ((!Utils.contains(rank, Utils.groupNames)) && (!Utils.contains(rank, Utils.modNames)))) &&
 				(!Utils.groupNames[0].equals(""))) {
 			System.out.println(pu + " has an invalid rank! Being set to lowest rank or null if not set!");
-			Commands.setRank(pu, rank, Utils.groupNames[0]);
+			Utils.setPlayerRankValue(pu, Utils.groupNames[0]);
 			rank = Utils.groupNames[0];
 		}
-
-
 
 		if (rank.equals(""))
 		{
 			Utils.prefixes.put(pu, "");
 		}
 		else {
+			System.out.println(rank);
 			File groupFile = new File(groupsFolder, rank + ".txt");
+			String prefix = Utils.getRankValues().getString(rank);
+			System.out.println(prefix);
+			if (prefix.contains("_")) {
+				Utils.prefixes.put(pu, "");
+			}
+			else {
+				Utils.prefixes.put(pu, prefix);
+			}
 			try {
-				Scanner scan = new Scanner(groupFile);
-				scan.next();
-				String prefix = scan.next().trim();
-				scan.close();
-
-				if (prefix.contains("#")) {
-					Utils.prefixes.put(pu, "");
-				}
-				else {
-					Utils.prefixes.put(pu, prefix);
-				}
 				parseFiles(groupFile, addPermissions, removePermissions, storedPermissions);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
 		}
+
 		File groupFile;
 		if (!rank.equals("")) {
 			try {
@@ -136,12 +131,10 @@ public final class GetPermissions
 
 		try
 		{
-			br.readLine();
-			br.readLine();
-			br.readLine();
-			br.readLine();
+			br.readLine(); //Permissions:
+			br.readLine(); //--------------
 
-
+			//Actual +/- permissions start here
 			line = br.readLine();
 
 			while (line != null) {
@@ -157,35 +150,31 @@ public final class GetPermissions
 			return;
 		}
 
-
 		String[] parsedPerms = text.split(newLine);
 		String identifier = "";
 		String node = "";
 
-		String[] arrayOfString1;
-		int j = (arrayOfString1 = parsedPerms).length; for (int i = 0; i < j; i++) { String perm = arrayOfString1[i];
-		identifier = perm.substring(0, 1);
-		node = perm.substring(2);
+		for(String perm : parsedPerms){
+			identifier = perm.substring(0, 1);
+			node = perm.substring(2);
 
-		if (node.contains("*"))
-		{
-			Set<String> wP = wildcardPermissions(node);
+			if (node.contains("*"))
+			{
+				Set<String> wP = wildcardPermissions(node);
 
-			if (identifier.equals("+")) {
-				addPermissions.addAll(wP);
+				if (identifier.equals("+")) {
+					addPermissions.addAll(wP);
+				}
+				else {
+					removePermissions.addAll(wP);
+				}
+			}
+			else if (identifier.equals("+")) {
+				addPermissions.add(node);
 			}
 			else {
-				removePermissions.addAll(wP);
+				removePermissions.add(node);
 			}
-
-
-		}
-		else if (identifier.equals("+")) {
-			addPermissions.add(node);
-		}
-		else {
-			removePermissions.add(node);
-		}
 		}
 	}
 

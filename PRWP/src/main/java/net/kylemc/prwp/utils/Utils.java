@@ -1,17 +1,23 @@
 package net.kylemc.prwp.utils;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.UUID;
 
+import net.kylemc.prwp.files.PermFileHandler;
+
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachment;
 
 public final class Utils {
+	private static File dFolder;
 	private static final String OS = System.getProperty("os.name").contains("Windows") ? "\r\n" : "\n";
 	private static String ranks = "";
 	public static HashMap<UUID, PermissionAttachment> players = new HashMap<UUID, PermissionAttachment>();
@@ -23,14 +29,23 @@ public final class Utils {
 	public static String[] bbl;
 	public static String[] bwl;
 	public static ArrayList<String> worldNames = new ArrayList<String>();
+	private static YamlConfiguration sessionNamesConfiguration;
+	private static YamlConfiguration sessionRanksConfiguration;
+	private static YamlConfiguration sessionPlayerRanksConfiguration;
 
 	private Utils() {
 		throw new AssertionError();
 	}
 
+	public static final void setYamlConfigurations(PermFileHandler pfh){
+		sessionNamesConfiguration = YamlConfiguration.loadConfiguration(pfh.namesFile);
+		sessionRanksConfiguration = YamlConfiguration.loadConfiguration(PermFileHandler.ranksFile);
+		sessionPlayerRanksConfiguration = YamlConfiguration.loadConfiguration(pfh.playerRanksFile);
+	}
+
 	public static final void initRanks() {
-		ranks = "";
 		if (groupNames.length < 1) {
+			ranks = "No ranks";
 			return;
 		}
 
@@ -38,10 +53,6 @@ public final class Utils {
 
 		for (int i = 1; i < groupNames.length; i++) {
 			ranks = ranks + ", " + groupNames[i];
-		}
-
-		if (ranks.equals("")) {
-			ranks = "No ranks";
 		}
 	}
 
@@ -79,7 +90,7 @@ public final class Utils {
 		return false;
 	}
 
-	public static final void disablePlugin() {
+	public static final void disablePlugin(PermFileHandler pfh) {
 		uuids.clear();
 		for (Player p : Bukkit.getServer().getOnlinePlayers()) {
 			UUID pu = p.getUniqueId();
@@ -91,6 +102,7 @@ public final class Utils {
 			prefixes.remove(pu);
 			permissions.remove(pu);
 		}
+		saveConfigurations(pfh);
 		Bukkit.getServer().getLogger().info("Permissions Disabled!");
 	}
 
@@ -104,5 +116,46 @@ public final class Utils {
 			}
 		}
 		return false;
+	}
+
+	public static File getdFolder() {
+		return dFolder;
+	}
+
+	public static void setdFolder(File dFolder) {
+		if (!dFolder.exists()) {
+			dFolder.mkdirs();
+		}
+		Utils.dFolder = dFolder;
+	}
+
+	private static void saveConfigurations(PermFileHandler pfh){
+		try {
+			sessionNamesConfiguration.save(pfh.namesFile);
+			sessionPlayerRanksConfiguration.save(pfh.playerRanksFile);
+		} catch (IOException e) {
+			Bukkit.getLogger().severe("Could not save yaml file(s)");
+			e.printStackTrace();
+		}
+	}
+
+	public static YamlConfiguration getNames(){
+		return sessionNamesConfiguration;
+	}
+
+	public static YamlConfiguration getRankValues(){
+		return sessionRanksConfiguration;
+	}
+
+	public static YamlConfiguration getPlayerRanks(){
+		return sessionPlayerRanksConfiguration;
+	}
+
+	public static void setNameValue(UUID pu, String name){
+		sessionNamesConfiguration.set(pu.toString(), name);
+	}
+
+	public static void setPlayerRankValue(UUID pu, String rank){
+		sessionPlayerRanksConfiguration.set(pu.toString(), rank);
 	}
 }

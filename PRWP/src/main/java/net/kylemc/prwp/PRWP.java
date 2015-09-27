@@ -20,87 +20,78 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.sk89q.wepif.PermissionsProvider;
 
-public final class PRWP
-extends JavaPlugin
-implements PermissionsProvider
+public final class PRWP extends JavaPlugin implements PermissionsProvider
 {
-	public static File dFolder;
+	private PermFileHandler pfh;
+	Commands pc;
 
 	@Override
 	public void onEnable()
 	{
-		dFolder = getDataFolder();
+		Utils.setdFolder(getDataFolder());
+		Utils.loadWorlds();
 
-		if (!dFolder.exists()) {
-			dFolder.mkdirs();
-		}
-
-		PermFileHandler pfh = new PermFileHandler(dFolder);
-		pfh.initFiles();
+		File dFolder = Utils.getdFolder();
+		pfh = new PermFileHandler(dFolder);
 
 		if (Utils.checkGroups()) {
 			getLogger().warning("Permissions not enabled, no groups/mods specified!");
 			return;
 		}
 
+		Utils.setYamlConfigurations(pfh);
 		Utils.initRanks();
-
 
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvents(new PermissionsEvents(), this);
 		pm.registerEvents(new ReloadEvents(this), this);
 
-		pfh.createBaseFolders();
-
-		Utils.loadWorlds();
-
-		if (!pfh.createSubFolders()) {
-			getServer().getLogger().warning("Permissions Not Enabled!");
-			return;
-		}
-
-		Commands pc = new Commands(this, dFolder);
+		pc = new Commands(this);
 		getCommand("permissions").setExecutor(pc);
 		getCommand("promote").setExecutor(pc);
 		getCommand("demote").setExecutor(pc);
-		getCommand("setrank").setExecutor(pc);
 		getCommand("getid").setExecutor(pc);
 		getServer().getLogger().info("Permissions Enabled!");
 
 		reloadHandler();
 	}
 
-
 	@Override
-	public void onDisable() {}
+	public void onDisable() {
+		Utils.disablePlugin(pfh);
+	}
 
+	public PermFileHandler getPermFileHandler(){
+		return pfh;
+	}
 
 	private final void reloadHandler()
 	{
 		getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
 			@Override
 			public void run() {
+				Utils.uuids.clear();
+				Utils.players.clear();
+
 				for (Player p : Bukkit.getOnlinePlayers())
 				{
 					UUID pu = p.getUniqueId();
 					Utils.uuids.put(p.getName(), pu);
-					String world = p.getWorld().getName();
 					PermissionAttachment attachment = p.addAttachment(PRWP.this);
-					Utils.players.put(pu, attachment);
-					Set<String> perms = GetPermissions.collectPermissions(pu, world);
+					Set<String> perms = GetPermissions.collectPermissions(pu, p.getWorld().getName());
 
 					for(String permission : perms){
 						attachment.setPermission(permission, true);
 					}
+
+					Utils.players.put(pu, attachment);
 				}
-				System.out.println("All permissions reloaded");
+				Bukkit.getLogger().info("All permissions reloaded");
 			}
 		}, 40L);
 	}
 
-
-
-
+	//Refactor vvvvv
 	@Override
 	public final boolean hasPermission(String player, String permission)
 	{
@@ -154,7 +145,7 @@ implements PermissionsProvider
 	public final boolean inGroup(String player, String group)
 	{
 		UUID pu = Bukkit.getOfflinePlayer(player).getUniqueId();
-		String rank = Commands.getRank(pu).toLowerCase();
+		String rank = pc.getRank(pu).toLowerCase();
 		return rank.equals(group.toLowerCase());
 	}
 
