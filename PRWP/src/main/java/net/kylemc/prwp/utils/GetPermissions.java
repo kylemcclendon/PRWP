@@ -64,7 +64,7 @@ public final class GetPermissions
 
 		if (((rank.equals("")) || ((!Utils.contains(rank, Utils.groupNames)) && (!Utils.contains(rank, Utils.modNames)))) &&
 				(!Utils.groupNames[0].equals(""))) {
-			System.out.println(pu + " has an invalid rank! Being set to lowest rank or null if not set!");
+			Bukkit.getLogger().warning(pu + " has an invalid rank! Being set to lowest rank or null if not set!");
 			Utils.setPlayerRankValue(pu, Utils.groupNames[0]);
 			rank = Utils.groupNames[0];
 		}
@@ -74,10 +74,8 @@ public final class GetPermissions
 			Utils.prefixes.put(pu, "");
 		}
 		else {
-			System.out.println(rank);
 			File groupFile = new File(groupsFolder, rank + ".txt");
 			String prefix = Utils.getRankValues().getString(rank);
-			System.out.println(prefix);
 			if (prefix.contains("_")) {
 				Utils.prefixes.put(pu, "");
 			}

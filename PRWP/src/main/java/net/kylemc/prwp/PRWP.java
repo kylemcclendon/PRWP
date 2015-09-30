@@ -145,14 +145,23 @@ public final class PRWP extends JavaPlugin implements PermissionsProvider
 	public final boolean inGroup(String player, String group)
 	{
 		UUID pu = Bukkit.getOfflinePlayer(player).getUniqueId();
-		String rank = pc.getRank(pu).toLowerCase();
+		String rank = Utils.getRank(pu);
+		if(rank == null){
+			return false;
+		}
 		return rank.equals(group.toLowerCase());
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public final String[] getGroups(String player)
 	{
-		return new String[] { "None" };
+		UUID pu = Bukkit.getOfflinePlayer(player).getUniqueId();
+		String rank = Utils.getRank(pu);
+		if(rank == null){
+			return new String[0];
+		}
+		return new String[] { rank };
 	}
 
 	@Override
@@ -170,12 +179,16 @@ public final class PRWP extends JavaPlugin implements PermissionsProvider
 	@Override
 	public final boolean inGroup(OfflinePlayer player, String group)
 	{
-		return false;
+		UUID pu = player.getUniqueId();
+		String rank = Utils.getRank(pu);
+		return rank == group;
 	}
 
 	@Override
 	public final String[] getGroups(OfflinePlayer player)
 	{
-		return null;
+		UUID pu = player.getUniqueId();
+		String rank = Utils.getRank(pu);
+		return new String[] { rank };
 	}
 }

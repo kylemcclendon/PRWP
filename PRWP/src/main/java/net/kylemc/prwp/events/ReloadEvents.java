@@ -41,7 +41,12 @@ public class ReloadEvents implements Listener
 		//First Join
 		if(name == null){
 			Utils.setNameValue(pu, p.getName());
-			Utils.setPlayerRankValue(pu, "");
+			if(Utils.groupNames.length > 0){
+				Utils.setPlayerRankValue(pu, Utils.groupNames[0].toLowerCase());
+			}
+			else{
+				Utils.setPlayerRankValue(pu, "");
+			}
 			name = p.getName();
 		}
 

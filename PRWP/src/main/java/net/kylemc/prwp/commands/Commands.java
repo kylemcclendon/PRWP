@@ -91,6 +91,8 @@ public final class Commands implements CommandExecutor
 		}
 
 		if (cmd.getName().equalsIgnoreCase("promote")) {
+			String[] ranks = Utils.getRanks().split(",");
+
 			if (((sender instanceof Player)) && (!sender.hasPermission("permissions.moderator.promote")))
 			{
 				sender.sendMessage(ChatColor.RED + "You do not have permission to do this!");
@@ -102,12 +104,12 @@ public final class Commands implements CommandExecutor
 			}
 
 			UUID pu = Bukkit.getOfflinePlayer(args[0]).getUniqueId();
-			String oldRank = getRank(pu);
+			String oldRank = Utils.getRank(pu);
 
 			if(oldRank == null){
 				sender.sendMessage(ChatColor.RED + "Player does not exist");
 			}
-			if (Utils.contains(oldRank, Utils.modNames)) {
+			if (Utils.contains(oldRank, Utils.modNames) && sender instanceof Player) {
 				sender.sendMessage(ChatColor.RED + "Cannot promote mod team in game. Contact the server owner!");
 				return true;
 			}
@@ -115,8 +117,8 @@ public final class Commands implements CommandExecutor
 				sender.sendMessage(ChatColor.RED + "No groups have been specified");
 				return true;
 			}
-			if ((oldRank.equals("")) || (!Utils.contains(oldRank, Utils.groupNames))) {
-				setRank(pu, Utils.groupNames[0].toLowerCase());
+			if ((oldRank.equals("")) || (!Utils.contains(oldRank, ranks))) {
+				Utils.setRank(pu, Utils.groupNames[0].toLowerCase());
 				sender.sendMessage(args[0] + "set to lowest rank");
 
 				Player p = Bukkit.getPlayer(pu);
@@ -127,30 +129,38 @@ public final class Commands implements CommandExecutor
 				return true;
 			}
 
-			int position = Utils.groupNames.length - 1;
-			for (int i = 0; i < Utils.groupNames.length; i++) {
-				if (Utils.groupNames[i].equals(oldRank)) {
-					position = i;
+			int pos = ranks.length - 1;
+			for(int i = 0; i < ranks.length; i++){
+				if(ranks[i].equals(oldRank)){
+					pos = i;
 					break;
 				}
 			}
-			if (position == Utils.groupNames.length - 1) {
+
+			for(String r : ranks){
+				System.out.println(r);
+			}
+
+			if ((pos == Utils.groupNames.length - 1 && sender instanceof Player) ||
+					(pos == ranks.length - 1 && !(sender instanceof Player))) {
 				sender.sendMessage(ChatColor.RED + args[0] + " is fully promoted.");
 				return true;
 			}
 
 			Player p = Bukkit.getPlayer(pu);
-			setRank(pu, Utils.groupNames[(position + 1)].toLowerCase());
-			sender.sendMessage(ChatColor.AQUA + args[0] + " promoted to: " + Utils.groupNames[(position + 1)]);
+			Utils.setRank(pu, ranks[(pos + 1)].toLowerCase());
+			sender.sendMessage(ChatColor.AQUA + args[0] + " promoted to: " + ranks[(pos + 1)]);
 			if (p != null) {
 				String worldName = p.getWorld().getName();
 				reloadPlayer(p, worldName);
-				p.sendMessage(ChatColor.AQUA + "You have been promoted to: " + Utils.groupNames[(position + 1)]);
+				p.sendMessage(ChatColor.AQUA + "You have been promoted to: " + ranks[(pos + 1)]);
 			}
 			return true;
 		}
 
 		if (cmd.getName().equalsIgnoreCase("demote")) {
+			String[] ranks = Utils.getRanks().split(",");
+
 			if (((sender instanceof Player)) && (!sender.hasPermission("permissions.moderator.demote"))) {
 				sender.sendMessage(ChatColor.RED + "You do not have permission to do this!");
 				return true;
@@ -162,14 +172,14 @@ public final class Commands implements CommandExecutor
 			String playerName = args[0].toLowerCase();
 			UUID pu = Bukkit.getOfflinePlayer(playerName).getUniqueId();
 
-			String orank = getRank(pu).toLowerCase();
+			String orank = Utils.getRank(pu).toLowerCase();
 
 			if (orank == null) {
 				sender.sendMessage(ChatColor.RED + "Player does not exist");
 				return true;
 			}
 
-			if (Utils.contains(orank, Utils.modNames)) {
+			if (Utils.contains(orank, Utils.modNames) && sender instanceof Player) {
 				sender.sendMessage(ChatColor.RED + "Cannot demote mod team in game. Contact server owner!");
 				return true;
 			}
@@ -179,24 +189,25 @@ public final class Commands implements CommandExecutor
 			}
 
 			int position = 0;
-			for (int i = 0; i < Utils.groupNames.length; i++) {
-				if (Utils.groupNames[i].equals(orank)) {
+			for (int i = 0; i < ranks.length; i++) {
+				if (ranks[i].equals(orank)) {
 					position = i;
 					break;
 				}
 			}
+
 			if (position == 0) {
 				sender.sendMessage(ChatColor.RED + args[0] + " is fully demoted.");
 				return true;
 			}
 
-			setRank(pu, Utils.groupNames[(position - 1)].toLowerCase());
-			sender.sendMessage(ChatColor.AQUA + args[0] + " demoted to: " + Utils.groupNames[(position - 1)]);
+			Utils.setRank(pu, ranks[(position - 1)].toLowerCase());
+			sender.sendMessage(ChatColor.AQUA + args[0] + " demoted to: " + ranks[(position - 1)]);
 			Player p = sender.getServer().getPlayer(pu);
 			if (p != null) {
 				String worldName = p.getWorld().getName();
 				reloadPlayer(p, worldName);
-				p.sendMessage(ChatColor.AQUA + "You have been demoted to: " + Utils.groupNames[(position - 1)]);
+				p.sendMessage(ChatColor.AQUA + "You have been demoted to: " + ranks[(position - 1)]);
 			}
 			return true;
 		}
@@ -232,14 +243,5 @@ public final class Commands implements CommandExecutor
 			attachment2.setPermission(perm, true);
 		}
 		Utils.players.put(pu, attachment2);
-	}
-
-	public final String getRank(UUID pu){
-		return Utils.getPlayerRanks().getString(pu.toString());
-	}
-
-	public final void setRank(UUID pu, String newRank)
-	{
-		Utils.setPlayerRankValue(pu, newRank);
 	}
 }

@@ -52,7 +52,13 @@ public final class Utils {
 		ranks += groupNames[0];
 
 		for (int i = 1; i < groupNames.length; i++) {
-			ranks = ranks + ", " + groupNames[i];
+			ranks = ranks + "," + groupNames[i];
+		}
+
+		if(modNames.length > 0){
+			for(int i = 0; i < modNames.length; i++){
+				ranks = ranks + "," + modNames[i];
+			}
 		}
 	}
 
@@ -157,5 +163,14 @@ public final class Utils {
 
 	public static void setPlayerRankValue(UUID pu, String rank){
 		sessionPlayerRanksConfiguration.set(pu.toString(), rank);
+	}
+
+	public final static String getRank(UUID pu){
+		return sessionPlayerRanksConfiguration.getString(pu.toString());
+	}
+
+	public final static void setRank(UUID pu, String newRank)
+	{
+		sessionPlayerRanksConfiguration.set(pu.toString(), newRank);
 	}
 }
