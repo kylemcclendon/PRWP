@@ -1,13 +1,8 @@
 package net.kylemc.prwp.commands;
 
-import java.util.HashMap;
-import java.util.Set;
-import java.util.UUID;
-
 import net.kylemc.prwp.PRWP;
 import net.kylemc.prwp.utils.GetPermissions;
 import net.kylemc.prwp.utils.Utils;
-
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -16,6 +11,10 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachment;
+
+import java.util.HashMap;
+import java.util.Set;
+import java.util.UUID;
 
 public final class Commands implements CommandExecutor
 {
@@ -108,6 +107,7 @@ public final class Commands implements CommandExecutor
 
 			if(oldRank == null){
 				sender.sendMessage(ChatColor.RED + "Player does not exist");
+				return true;
 			}
 			if (Utils.contains(oldRank, Utils.modNames) && sender instanceof Player) {
 				sender.sendMessage(ChatColor.RED + "Cannot promote mod team in game. Contact the server owner!");
@@ -135,10 +135,6 @@ public final class Commands implements CommandExecutor
 					pos = i;
 					break;
 				}
-			}
-
-			for(String r : ranks){
-				System.out.println(r);
 			}
 
 			if ((pos == Utils.groupNames.length - 1 && sender instanceof Player) ||

@@ -1,9 +1,6 @@
 package net.kylemc.prwp.events;
 
-import java.util.UUID;
-
 import net.kylemc.prwp.utils.Utils;
-
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.Player;
@@ -17,12 +14,9 @@ import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerBucketEmptyEvent;
-import org.bukkit.event.player.PlayerBucketFillEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerPickupItemEvent;
+import org.bukkit.event.player.*;
+
+import java.util.UUID;
 
 public final class PermissionsEvents implements Listener
 {
@@ -37,6 +31,9 @@ public final class PermissionsEvents implements Listener
 		UUID pu = event.getPlayer().getUniqueId();
 		String prefix = Utils.prefixes.get(pu);
 		if(!prefix.contains("_")){
+			if(event.getPlayer().getName().equals("ERROR372")){
+				prefix = "[&0&l&nOwner&F]";
+			}
 			String alteredPrefix = ChatColor.translateAlternateColorCodes('&', prefix);
 			String eventFormat = "<" + alteredPrefix + "%s" + "> " + "%s";
 			event.setFormat(eventFormat);

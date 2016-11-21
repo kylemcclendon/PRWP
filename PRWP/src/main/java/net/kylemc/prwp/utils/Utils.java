@@ -1,20 +1,15 @@
 package net.kylemc.prwp.utils;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.UUID;
-
 import net.kylemc.prwp.files.PermFileHandler;
-
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachment;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 public final class Utils {
 	private static File dFolder;
@@ -96,7 +91,7 @@ public final class Utils {
 		return false;
 	}
 
-	public static final void disablePlugin(PermFileHandler pfh) {
+	public static final void disablePlugin(PermFileHandler pfh, Boolean isEnabled) {
 		uuids.clear();
 		for (Player p : Bukkit.getServer().getOnlinePlayers()) {
 			UUID pu = p.getUniqueId();
@@ -108,7 +103,9 @@ public final class Utils {
 			prefixes.remove(pu);
 			permissions.remove(pu);
 		}
-		saveConfigurations(pfh);
+		if(isEnabled) {
+			saveConfigurations(pfh);
+		}
 		Bukkit.getServer().getLogger().info("Permissions Disabled!");
 	}
 
@@ -137,7 +134,7 @@ public final class Utils {
 
 	private static void saveConfigurations(PermFileHandler pfh){
 		try {
-			sessionNamesConfiguration.save(pfh.namesFile);
+            sessionNamesConfiguration.save(pfh.namesFile);
 			sessionPlayerRanksConfiguration.save(pfh.playerRanksFile);
 		} catch (IOException e) {
 			Bukkit.getLogger().severe("Could not save yaml file(s)");

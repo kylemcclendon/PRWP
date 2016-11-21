@@ -1,19 +1,13 @@
 package net.kylemc.prwp.utils;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import org.bukkit.Bukkit;
+import org.bukkit.permissions.Permission;
+
+import java.io.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-
-import org.bukkit.Bukkit;
-import org.bukkit.permissions.Permission;
 
 public final class GetPermissions
 {
